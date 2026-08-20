@@ -1,37 +1,372 @@
-<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1"><meta name="theme-color" content="#050505"><title>Prima del Giro</title><style>
-*{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;height:100%;background:#050505;color:#aaa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}button{font:inherit}.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:#050505;z-index:20;gap:16px}h1{font-size:1.65rem;font-weight:300;letter-spacing:.11em;color:#eee}.tag{max-width:330px;line-height:1.55;color:#9a9a9a}.rules{max-width:350px;font-size:.78rem;line-height:1.55;color:#5b5b5b}.primary{padding:13px 30px;min-width:180px;border:1px solid #383838;border-radius:999px;background:#111;color:#ddd}.primary:active{transform:scale(.99);background:#181818}#game{position:absolute;inset:0;display:none}canvas{width:100%;height:100%;display:block}#hud{position:absolute;inset:0;pointer-events:none;font-variant-numeric:tabular-nums}.top{position:absolute;top:22px;left:22px;right:22px;display:flex;justify-content:space-between;align-items:flex-start}.label{font-size:.62rem;letter-spacing:.14em;color:#454545;text-transform:uppercase}.value{font-size:1.15rem;letter-spacing:.04em;color:#a6a6a6;margin-top:3px}.right{text-align:right}#feedback{position:absolute;left:0;right:0;bottom:62px;text-align:center;font-size:.78rem;letter-spacing:.12em;color:#949494;opacity:0;transform:translateY(4px);transition:.16s}#feedback.show{opacity:1;transform:none}#hint{position:absolute;left:18px;right:18px;bottom:26px;text-align:center;font-size:.68rem;color:#3d3d3d;transition:opacity .8s}#end,#permission{display:none}.eyebrow{font-size:.68rem;letter-spacing:.17em;text-transform:uppercase;color:#555}#finalScore{font-size:3rem;font-weight:200;color:#eee}#finalMeta{font-size:.83rem;line-height:1.55;color:#666}#record{font-size:.74rem;color:#4b4b4b;min-height:1em}
-</style></head><body>
-<div id="start" class="screen"><h1>PRIMA DEL GIRO</h1><p class="tag">Ruba <b>7 secondi</b> al futuro.<br>Il primo impulso può mentire. Il secondo conferma.</p><button class="primary" id="btnStart">Inizia</button><p class="rules">Muoviti al primo impulso per rischiare e guadagnare più tempo. Aspetta l'eco per essere sicuro, ma ruberai meno futuro. Verticale = avanti · orizzontale = lato · diagonale = torsione.</p><div id="record"></div></div>
-<div id="game"><canvas id="c"></canvas><div id="hud"><div class="top"><div><div class="label">futuro rubato</div><div class="value" id="future">+0.00 s</div></div><div class="right"><div class="label">serie</div><div class="value" id="streak">0</div></div></div><div id="feedback"></div><div id="hint">un impulso = rischio · due impulsi = conferma</div></div></div>
-<div id="end" class="screen"><div class="eyebrow" id="endEyebrow"></div><div id="finalScore">0</div><div id="finalMeta"></div><p class="tag" id="endMsg"></p><button class="primary" id="btnRestart">Riprova</button></div>
-<div id="permission" class="screen"><h1>SERVONO I SENSORI</h1><p class="tag">Consenti l'accesso al movimento. Su desktop puoi provare con ↑, → e spazio.</p><button class="primary" id="btnFallback">Prova comunque</button></div>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1" />
+<meta name="theme-color" content="#050505" />
+<title>Prima del Giro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;height:100%;background:#050505;color:#aaa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}button{font:inherit}.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:#050505;z-index:20;gap:16px}h1{font-size:1.62rem;font-weight:300;letter-spacing:.12em;color:#eee}.tag{max-width:345px;line-height:1.55;color:#9a9a9a}.rules{max-width:360px;font-size:.8rem;line-height:1.55;color:#5b5b5b}.primary{padding:13px 30px;min-width:180px;border:1px solid #383838;border-radius:999px;background:#111;color:#ddd}.primary:active{transform:scale(.99);background:#181818}#game{position:absolute;inset:0;display:none}canvas{width:100%;height:100%;display:block}#hud{position:absolute;inset:0;pointer-events:none;font-variant-numeric:tabular-nums}.top{position:absolute;top:22px;left:22px;right:22px;display:flex;justify-content:space-between;align-items:flex-start}.label{font-size:.62rem;letter-spacing:.14em;color:#454545;text-transform:uppercase}.value{font-size:1.15rem;letter-spacing:.04em;color:#a6a6a6;margin-top:3px}.right{text-align:right}#feedback{position:absolute;left:0;right:0;bottom:66px;text-align:center;font-size:.78rem;letter-spacing:.12em;color:#949494;opacity:0;transform:translateY(4px);transition:.16s}#feedback.show{opacity:1;transform:none}#hint{position:absolute;left:18px;right:18px;bottom:28px;text-align:center;font-size:.68rem;color:#3d3d3d;transition:opacity .8s}.eyebrow{font-size:.68rem;letter-spacing:.17em;text-transform:uppercase;color:#555}#finalScore{font-size:3rem;font-weight:200;color:#eee}#finalMeta{font-size:.83rem;line-height:1.55;color:#666}#record{font-size:.74rem;color:#4b4b4b;min-height:1em}.mini{font-size:.72rem;color:#555}.kbd{font-size:.7rem;color:#444;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="start" class="screen">
+  <h1>PRIMA DEL GIRO</h1>
+  <p class="tag">Indovina dove partirà il punto.<br><b>Scorri prima che si muova.</b></p>
+  <button class="primary" id="btnStart">Inizia</button>
+  <p class="rules">Il primo impulso può mentire. Il secondo conferma. Se ti fidi subito, rubi più futuro. Se aspetti, rischi meno ma guadagni meno.</p>
+  <div id="record"></div>
+  <div class="kbd">Desktop: frecce o WASD</div>
+</div>
+
+<div id="game">
+  <canvas id="c"></canvas>
+  <div id="hud">
+    <div class="top">
+      <div><div class="label">futuro rubato</div><div class="value" id="future">+0.00 s</div></div>
+      <div class="right"><div class="label">serie</div><div class="value" id="streak">0</div></div>
+    </div>
+    <div id="feedback"></div>
+    <div id="hint">swipe = previsione · un impulso = rischio · due = conferma</div>
+  </div>
+</div>
+
+<div id="end" class="screen" style="display:none">
+  <div class="eyebrow" id="endEyebrow"></div>
+  <div id="finalScore">0</div>
+  <div id="finalMeta"></div>
+  <p class="tag" id="endMsg"></p>
+  <button class="primary" id="btnRestart">Riprova</button>
+</div>
+
 <script>
-const AXES={vertical:{angle:90},horizontal:{angle:0},depth:{angle:45}},KEYS=Object.keys(AXES);
-const GOAL=7000,THRESHOLD=24,COOLDOWN=350,MAX_MISSES=3,PENALTY_FALSE=900,PENALTY_MISS=1200;
-let active=false,token=0,round=null,futureBank=0,streak=0,bestStreak=0,misses=0,falseBites=0,blindHits=0,confirmedHits=0,startAt=0,fallback=false;
-let orientation={beta:0,gamma:0,alpha:0,valid:false},base=null,lastGesture=0,flash=null,impact=null,scars=[],feedbackTimer=null,audio=null;
-const $=id=>document.getElementById(id),start=$('start'),game=$('game'),end=$('end'),permission=$('permission'),futureEl=$('future'),streakEl=$('streak'),feedback=$('feedback'),hint=$('hint'),record=$('record'),canvas=$('c'),ctx=canvas.getContext('2d');let W=0,H=0,dpr=1;
-function resize(){dpr=Math.max(1,Math.min(3,devicePixelRatio||1));W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
-function ensureAudio(){if(!audio){const A=window.AudioContext||window.webkitAudioContext;if(A)audio=new A()}if(audio&&audio.state==='suspended')audio.resume()}
-function tone(f,d=.035,g=.022){if(!audio)return;const o=audio.createOscillator(),v=audio.createGain();o.frequency.value=f;o.type='sine';v.gain.value=g;o.connect(v);v.connect(audio.destination);const n=audio.currentTime;v.gain.setValueAtTime(g,n);v.gain.exponentialRampToValueAtTime(.0001,n+d);o.start(n);o.stop(n+d)}function buzz(p){if(navigator.vibrate)navigator.vibrate(p)}
-async function motionPermission(){if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{return(await DeviceOrientationEvent.requestPermission())==='granted'}catch{return false}}return typeof DeviceOrientationEvent!=='undefined'}
-function best(){return Number(localStorage.getItem('pdg_best_win_ms')||0)}function showRecord(){const b=best();record.textContent=b?`record: ${(b/1000).toFixed(1)} s per arrivare prima`:''}showRecord();
-$('btnStart').onclick=async()=>{ensureAudio();const ok=await motionPermission();const desktop=!('ontouchstart'in window)&&navigator.maxTouchPoints===0;if(!ok&&!desktop){start.style.display='none';permission.style.display='flex';return}fallback=!ok;begin()};$('btnFallback').onclick=()=>{ensureAudio();fallback=true;permission.style.display='none';begin()};$('btnRestart').onclick=()=>{ensureAudio();end.style.display='none';begin()};
-function begin(){token++;active=true;round=null;futureBank=0;streak=0;bestStreak=0;misses=0;falseBites=0;blindHits=0;confirmedHits=0;startAt=performance.now();base=orientation.valid?{...orientation}:null;lastGesture=0;flash=null;impact=null;scars=[];start.style.display='none';permission.style.display='none';end.style.display='none';game.style.display='block';updateHud();hint.style.opacity='1';setTimeout(()=>{if(active)hint.style.opacity='.25'},5000);say('RUBA IL FUTURO',850);schedule(1100);requestAnimationFrame(loop)}
-function circ(a,b){let d=a-b;while(d>180)d-=360;while(d<-180)d+=360;return d}
-addEventListener('deviceorientation',e=>{if(e.beta==null||e.gamma==null||e.alpha==null)return;orientation={beta:e.beta,gamma:e.gamma,alpha:e.alpha,valid:true};if(!active||fallback)return;if(!base){base={...orientation};return}const now=performance.now();if(now-lastGesture<COOLDOWN)return;const vals={vertical:Math.abs(orientation.beta-base.beta),horizontal:Math.abs(orientation.gamma-base.gamma),depth:Math.abs(circ(orientation.alpha,base.alpha))};const axis=KEYS.reduce((a,b)=>vals[b]>vals[a]?b:a,KEYS[0]);if(vals[axis]>=THRESHOLD){lastGesture=now;base={...orientation};gesture(axis,now)}else if(Math.max(...Object.values(vals))<8){base.beta=base.beta*.92+orientation.beta*.08;base.gamma=base.gamma*.92+orientation.gamma*.08;base.alpha=base.alpha*.92+orientation.alpha*.08}});
-addEventListener('keydown',e=>{if(!active)return;let a=e.code==='ArrowUp'?'vertical':e.code==='ArrowRight'?'horizontal':e.code==='Space'?'depth':null;if(a){e.preventDefault();gesture(a,performance.now())}});canvas.addEventListener('pointerdown',e=>{if(!active||!fallback)return;const x=e.clientX/W;gesture(x<.33?'vertical':x>.66?'horizontal':'depth',performance.now())});
-function progress(){return Math.min(1,futureBank/GOAL)}function fakeChance(){if(futureBank<1200)return 0;return .12+progress()*.34}function schedule(delay=null){if(!active)return;const t=token,d=progress(),ms=delay??((950+Math.random()*1050)*(1-d*.32));setTimeout(()=>{if(active&&t===token)startRound()},ms)}
-function pulse(axis,strength=1,dur=60){flash={axis,until:performance.now()+dur,strength};tone(510,.018,.013)}
-function startRound(){const axis=KEYS[Math.floor(Math.random()*3)],fake=Math.random()<fakeChance(),d=progress(),lead=720-Math.random()*170-d*190,now=performance.now(),echoDelay=95-Math.random()*20;round={axis,fake,firstAt:now,echoAt:fake?null:now+echoDelay,eventAt:fake?null:now+echoDelay+lead,resolved:false,echoSeen:false};pulse(axis,1,55);if(!fake)setTimeout(()=>{if(!active||!round||round.resolved||round.fake)return;round.echoSeen=true;pulse(axis,.72,48)},echoDelay);const expiry=echoDelay+lead+(fake?220:0);if(fake)setTimeout(()=>{if(!active||!round||round.resolved||!round.fake)return;round.resolved=true;round=null;say('ERA RUMORE',360);schedule()},expiry);else{const ref=round;setTimeout(()=>{if(active&&round===ref&&!ref.resolved)eventHits(ref)},echoDelay+lead)}}
-function gesture(axis,at){if(!active)return;if(!round||round.resolved){punish(axis,'TROPPO PRESTO',650);return}if(round.fake){round.resolved=true;falseBites++;punish(axis,'HAI CREDUTO AL RUMORE',PENALTY_FALSE);round=null;schedule(650);return}if(axis!==round.axis){round.resolved=true;punish(axis,'ASSE SBAGLIATO',PENALTY_FALSE);round=null;schedule(700);return}const lead=round.eventAt-at;if(lead<=0){round.resolved=true;miss('TARDI');round=null;schedule(700);return}const blind=!round.echoSeen;round.resolved=true;const risk=blind?1.42:1;const chain=1+Math.min(10,streak)*.035;const gain=Math.round(Math.max(120,lead)*risk*chain);futureBank=Math.min(GOAL,futureBank+gain);streak++;bestStreak=Math.max(bestStreak,streak);if(blind)blindHits++;else confirmedHits++;addScar(round.axis,blind);impact={axis:round.axis,at:performance.now(),good:true};tone(blind?830:690,.045,.026);buzz(blind?[18,20,18]:22);say(`${blind?'ALLA CIECA':'CONFERMATO'} · +${(gain/1000).toFixed(2)} s`,620);round=null;updateHud();if(futureBank>=GOAL){win();return}schedule(blind?500:620)}
-function eventHits(r){impact={axis:r.axis,at:performance.now(),good:false};tone(150,.09,.035);buzz([45,35,45]);r.resolved=true;round=null;miss('IL FUTURO È ARRIVATO');schedule(720)}
-function punish(axis,msg,penalty){impact={axis,at:performance.now(),good:false};futureBank=Math.max(0,futureBank-penalty);streak=0;misses++;tone(190,.06,.03);buzz(55);say(`${msg} · -${(penalty/1000).toFixed(2)} s`,650);updateHud();if(misses>=MAX_MISSES)lose('Hai perso il vantaggio.')}
-function miss(msg){futureBank=Math.max(0,futureBank-PENALTY_MISS);streak=0;misses++;say(`${msg} · -1.20 s`,680);updateHud();if(misses>=MAX_MISSES)lose('Hai aspettato troppo a lungo.')}
-function addScar(axis,blind){scars.push({axis,offset:(Math.random()-.5)*30,rot:(Math.random()-.5)*.2,alpha:blind?.15:.09});if(scars.length>34)scars.shift()}
-function win(){if(!active)return;active=false;token++;const elapsed=performance.now()-startAt,b=best();if(!b||elapsed<b)localStorage.setItem('pdg_best_win_ms',String(Math.round(elapsed)));game.style.display='none';end.style.display='flex';$('endEyebrow').textContent='SEI ARRIVATO PRIMA';$('finalScore').textContent='+7.00 s';$('finalMeta').innerHTML=`tempo reale: ${(elapsed/1000).toFixed(1)} s<br>serie migliore: ${bestStreak} · alla cieca: ${blindHits} · confermati: ${confirmedHits}`;$('endMsg').textContent=b&&elapsed<b?'Nuovo record. Il futuro non ti ha raggiunto.':'Hai accumulato sette secondi prima che accadessero.';showRecord()}
-function lose(msg){if(!active)return;active=false;token++;game.style.display='none';end.style.display='flex';$('endEyebrow').textContent='IL FUTURO TI HA RIPRESO';$('finalScore').textContent=`+${(futureBank/1000).toFixed(2)} s`;$('finalMeta').innerHTML=`obiettivo: +7.00 s<br>serie migliore: ${bestStreak} · falsi abboccati: ${falseBites}`;$('endMsg').textContent=msg}
-function updateHud(){futureEl.textContent=`+${(futureBank/1000).toFixed(2)} s`;streakEl.textContent=String(streak)}function say(t,d=520){feedback.textContent=t;feedback.classList.add('show');clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>feedback.classList.remove('show'),d)}
-function loop(ts){if(!active)return;draw(ts||performance.now());requestAnimationFrame(loop)}function draw(now){ctx.clearRect(0,0,W,H);const cx=W/2,cy=H/2,len=Math.min(W,H)*.31,p=progress();for(const s of scars)drawAxis(s.axis,cx+s.offset,cy-s.offset*.35,len*.96,{alpha:s.alpha,width:1,rotation:s.rot,glow:0});for(const axis of KEYS){let alpha=.25+p*.05,width=1.3,rotation=0,glow=0;if(flash&&flash.axis===axis&&now<flash.until){const q=(flash.until-now)/60;alpha=.56+.32*q*flash.strength;width=1.75;rotation=Math.sin(now*.22)*.017*flash.strength;glow=6*flash.strength}if(impact&&impact.axis===axis){const age=now-impact.at;if(age<250){const q=1-age/250;rotation+=(impact.good?.055:.18)*Math.sin(age*.055)*q;alpha=Math.max(alpha,impact.good?.62:.82);width=impact.good?1.8:2.2}else impact=null}drawAxis(axis,cx,cy,len,{alpha,width,rotation,glow})}ctx.beginPath();ctx.arc(cx,cy,2.2,0,Math.PI*2);ctx.fillStyle='#3c3c3c';ctx.fill();const radius=16+Math.min(W,H)*.055;ctx.beginPath();ctx.arc(cx,cy,radius,-Math.PI/2,-Math.PI/2+Math.PI*2*p);ctx.strokeStyle=`rgba(210,210,210,${.08+.22*p})`;ctx.lineWidth=1.3;ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.strokeStyle='rgba(150,150,150,.04)';ctx.lineWidth=1;ctx.stroke()}
-function drawAxis(axis,cx,cy,len,o){const angle=AXES[axis].angle*Math.PI/180+(o.rotation||0),half=axis==='depth'?len*.84:len;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);if(o.glow){ctx.shadowBlur=o.glow;ctx.shadowColor='rgba(230,230,230,.35)'}ctx.beginPath();ctx.moveTo(-half,0);ctx.lineTo(half,0);ctx.strokeStyle=`rgba(190,190,190,${o.alpha})`;ctx.lineWidth=o.width;ctx.stroke();ctx.restore()}
-</script></body></html>
+(() => {
+  const DIRS = ["up","right","down","left"];
+  const VEC = {up:[0,-1], right:[1,0], down:[0,1], left:[-1,0]};
+  const GOAL = 7;
+  const MAX_MISSES = 3;
+  const BASE_FAKE = 0.15;
+  const MAX_FAKE = 0.42;
+  const ROUND_GAP_MIN = 650;
+  const ROUND_GAP_MAX = 1450;
+  const FIRST_CUE_MS = 70;
+  const CONFIRM_DELAY_MIN = 115;
+  const CONFIRM_DELAY_MAX = 220;
+  const LAUNCH_AFTER_CONFIRM_MIN = 300;
+  const LAUNCH_AFTER_CONFIRM_MAX = 520;
+  const SWIPE_MIN = 34;
+
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const startEl = document.getElementById('start');
+  const gameEl = document.getElementById('game');
+  const endEl = document.getElementById('end');
+  const futureEl = document.getElementById('future');
+  const streakEl = document.getElementById('streak');
+  const feedbackEl = document.getElementById('feedback');
+  const hintEl = document.getElementById('hint');
+  const finalScoreEl = document.getElementById('finalScore');
+  const finalMetaEl = document.getElementById('finalMeta');
+  const endEyebrowEl = document.getElementById('endEyebrow');
+  const endMsgEl = document.getElementById('endMsg');
+  const recordEl = document.getElementById('record');
+
+  let W=0,H=0,dpr=1;
+  let active=false;
+  let round=null;
+  let token=0;
+  let stolen=0;
+  let streak=0;
+  let bestStreak=0;
+  let misses=0;
+  let startTime=0;
+  let point={x:0,y:0};
+  let targetPoint={x:0,y:0};
+  let motion=null;
+  let pulses=[];
+  let trails=[];
+  let falseBites=0;
+  let earlyHits=0;
+  let confirmedHits=0;
+  let feedbackTimer=null;
+  let pointerStart=null;
+
+  function resize(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth; H=window.innerHeight;
+    canvas.width=Math.floor(W*dpr); canvas.height=Math.floor(H*dpr);
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(!active){ point.x=W/2; point.y=H/2; }
+  }
+  window.addEventListener('resize',resize); resize();
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function rand(a,b){ return a+Math.random()*(b-a); }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function otherDir(dir){ return pick(DIRS.filter(d=>d!==dir)); }
+  function dirAngle(dir){ return {right:0,down:Math.PI/2,left:Math.PI,up:-Math.PI/2}[dir]; }
+  function fakeChance(){ return clamp(BASE_FAKE + stolen*0.025 + streak*0.012, BASE_FAKE, MAX_FAKE); }
+  function nextGap(){ return rand(Math.max(420,ROUND_GAP_MIN-stolen*28), Math.max(820,ROUND_GAP_MAX-stolen*45)); }
+
+  function updateHUD(){
+    futureEl.textContent='+'+stolen.toFixed(2)+' s';
+    streakEl.textContent=String(streak);
+  }
+
+  function showFeedback(text){
+    clearTimeout(feedbackTimer);
+    feedbackEl.textContent=text;
+    feedbackEl.classList.add('show');
+    feedbackTimer=setTimeout(()=>feedbackEl.classList.remove('show'),560);
+  }
+
+  function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
+
+  function resetGame(){
+    token++;
+    active=true; round=null; motion=null; pulses=[]; trails=[];
+    stolen=0; streak=0; bestStreak=0; misses=0; falseBites=0; earlyHits=0; confirmedHits=0;
+    startTime=performance.now();
+    point={x:W/2,y:H/2}; targetPoint={...point};
+    startEl.style.display='none'; endEl.style.display='none'; gameEl.style.display='block';
+    hintEl.style.opacity='1'; setTimeout(()=>{if(active)hintEl.style.opacity='0.25';},4500);
+    updateHUD();
+    scheduleRound(700);
+    requestAnimationFrame(loop);
+  }
+
+  function scheduleRound(delay=nextGap()){
+    const my=++token;
+    setTimeout(()=>{
+      if(!active || my!==token) return;
+      beginRound();
+    },delay);
+  }
+
+  function beginRound(){
+    const trueDir=pick(DIRS);
+    const isFake=Math.random()<fakeChance();
+    const shownDir=isFake?otherDir(trueDir):trueDir;
+    const now=performance.now();
+    round={
+      trueDir, shownDir, isFake,
+      phase:'first', resolved:false,
+      firstAt:now, confirmAt:null, launchAt:null,
+      swipedAt:null, chose:null
+    };
+    pulse(shownDir,0.7,FIRST_CUE_MS);
+    const confirmDelay=rand(CONFIRM_DELAY_MIN,CONFIRM_DELAY_MAX);
+    setTimeout(()=>{
+      if(!active || !round || round.resolved) return;
+      round.phase='confirmed'; round.confirmAt=performance.now();
+      round.shownDir=trueDir;
+      pulse(trueDir,1.0,90);
+      const launchDelay=rand(LAUNCH_AFTER_CONFIRM_MIN,LAUNCH_AFTER_CONFIRM_MAX);
+      round.launchAt=performance.now()+launchDelay;
+      setTimeout(()=>launchRound(round),launchDelay);
+    },confirmDelay);
+  }
+
+  function pulse(dir,strength,duration){
+    pulses.push({dir,start:performance.now(),duration,strength});
+  }
+
+  function launchRound(r){
+    if(!active || !round || round!==r || r.resolved) return;
+    r.phase='launched';
+    const [vx,vy]=VEC[r.trueDir];
+    const dist=Math.min(W,H)*0.23;
+    targetPoint={x:W/2+vx*dist,y:H/2+vy*dist};
+    motion={from:{x:W/2,y:H/2},to:{...targetPoint},start:performance.now(),duration:150,dir:r.trueDir};
+    miss('TROPPO TARDI');
+  }
+
+  function onChoice(dir){
+    if(!active || !round || round.resolved) return;
+    const now=performance.now();
+    round.swipedAt=now; round.chose=dir;
+
+    if(round.phase==='first'){
+      if(round.isFake){
+        falseBites++;
+        failChoice('FALSO SEGNALE');
+        return;
+      }
+      if(dir!==round.trueDir){ failChoice('DIREZIONE SBAGLIATA'); return; }
+      earlyHits++;
+      const riskLead=Math.max(0,(round.confirmAt||now+160)-now);
+      const gain=clamp(0.72 + riskLead/420 + streak*0.035,0.75,1.65);
+      success(gain,'FIDUCIA +'+gain.toFixed(2)+'s',true);
+      return;
+    }
+
+    if(round.phase==='confirmed'){
+      if(dir!==round.trueDir){ failChoice('DIREZIONE SBAGLIATA'); return; }
+      confirmedHits++;
+      const lead=Math.max(0,(round.launchAt||now)-now);
+      const gain=clamp(0.28 + lead/1100 + streak*0.018,0.30,0.85);
+      success(gain,'CONFERMA +'+gain.toFixed(2)+'s',false);
+      return;
+    }
+  }
+
+  function success(gain,label,early){
+    if(!round || round.resolved) return;
+    round.resolved=true;
+    streak++;
+    bestStreak=Math.max(bestStreak,streak);
+    stolen=clamp(stolen+gain,0,GOAL+1);
+    trails.push({dir:round.trueDir,life:1,good:true});
+    showFeedback(label);
+    vibrate(early?[18,24,18]:24);
+    updateHUD();
+    if(stolen>=GOAL){ win(); return; }
+    round=null;
+    scheduleRound();
+  }
+
+  function failChoice(label){
+    if(!round || round.resolved) return;
+    round.resolved=true;
+    misses++;
+    streak=0;
+    stolen=clamp(stolen-0.55,0,GOAL);
+    trails.push({dir:round.trueDir,life:1,good:false});
+    showFeedback(label+' −0.55s');
+    vibrate([35,35,35]);
+    updateHUD();
+    if(misses>=MAX_MISSES){ lose('Hai esitato davanti al futuro.'); return; }
+    round=null;
+    scheduleRound(620);
+  }
+
+  function miss(label){
+    failChoice(label);
+  }
+
+  function win(){
+    active=false; token++;
+    const elapsed=(performance.now()-startTime)/1000;
+    const best=parseFloat(localStorage.getItem('pdg_swipe_best')||'0');
+    const isRecord=!best || elapsed<best;
+    if(isRecord) localStorage.setItem('pdg_swipe_best',elapsed.toFixed(2));
+    endEyebrowEl.textContent='SEI ARRIVATO PRIMA';
+    finalScoreEl.textContent=elapsed.toFixed(2)+' s';
+    finalMetaEl.innerHTML='serie max '+bestStreak+' · rischi riusciti '+earlyHits+' · conferme '+confirmedHits+' · falsi abboccati '+falseBites;
+    endMsgEl.textContent=isRecord?'Nuovo record. Il futuro è arrivato dopo di te.':'Hai rubato tutti i 7 secondi.';
+    showEnd();
+  }
+
+  function lose(msg){
+    active=false; token++;
+    endEyebrowEl.textContent='IL FUTURO TI HA RIPRESO';
+    finalScoreEl.textContent='+'+stolen.toFixed(2)+' s';
+    finalMetaEl.innerHTML='serie max '+bestStreak+' · rischi riusciti '+earlyHits+' · errori '+misses;
+    endMsgEl.textContent=msg;
+    showEnd();
+  }
+
+  function showEnd(){
+    setTimeout(()=>{
+      gameEl.style.display='none'; endEl.style.display='flex';
+      updateRecord();
+    },180);
+  }
+
+  function updateRecord(){
+    const best=parseFloat(localStorage.getItem('pdg_swipe_best')||'0');
+    recordEl.textContent=best?'record: '+best.toFixed(2)+' s':'';
+  }
+  updateRecord();
+
+  function detectSwipe(dx,dy){
+    if(Math.hypot(dx,dy)<SWIPE_MIN) return null;
+    if(Math.abs(dx)>Math.abs(dy)) return dx>0?'right':'left';
+    return dy>0?'down':'up';
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(!active) return;
+    pointerStart={x:e.clientX,y:e.clientY};
+    canvas.setPointerCapture?.(e.pointerId);
+  });
+  canvas.addEventListener('pointerup',e=>{
+    if(!active || !pointerStart) return;
+    const dir=detectSwipe(e.clientX-pointerStart.x,e.clientY-pointerStart.y);
+    pointerStart=null;
+    if(dir) onChoice(dir);
+  });
+  canvas.addEventListener('pointercancel',()=>pointerStart=null);
+
+  window.addEventListener('keydown',e=>{
+    const m={ArrowUp:'up',w:'up',W:'up',ArrowRight:'right',d:'right',D:'right',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left'};
+    if(active && m[e.key]){ e.preventDefault(); onChoice(m[e.key]); }
+  });
+
+  document.getElementById('btnStart').addEventListener('click',resetGame);
+  document.getElementById('btnRestart').addEventListener('click',resetGame);
+
+  function drawArrow(cx,cy,dir,len,alpha,width=1.5){
+    const a=dirAngle(dir);
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(a);
+    ctx.globalAlpha=alpha; ctx.strokeStyle='#d7d7d7'; ctx.lineWidth=width; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-len*.45,0); ctx.lineTo(len*.45,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(len*.45,0); ctx.lineTo(len*.18,-len*.14); ctx.moveTo(len*.45,0); ctx.lineTo(len*.18,len*.14); ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2, cy=H/2;
+    ctx.fillStyle='#050505'; ctx.fillRect(0,0,W,H);
+
+    const ring=Math.min(W,H)*0.16;
+    ctx.strokeStyle='rgba(255,255,255,.035)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx,cy,ring,0,Math.PI*2); ctx.stroke();
+    for(const d of DIRS){
+      const [vx,vy]=VEC[d];
+      ctx.beginPath(); ctx.moveTo(cx+vx*(ring-8),cy+vy*(ring-8)); ctx.lineTo(cx+vx*(ring+8),cy+vy*(ring+8)); ctx.stroke();
+    }
+
+    const now=performance.now();
+    pulses=pulses.filter(p=>now-p.start<p.duration+200);
+    for(const p of pulses){
+      const t=(now-p.start)/p.duration;
+      const fade=t<=1?(1-Math.abs(t-.5)*1.35):Math.max(0,1-(t-1)*4);
+      const [vx,vy]=VEC[p.dir];
+      const px=cx+vx*ring, py=cy+vy*ring;
+      drawArrow(px,py,p.dir,30,clamp(fade,0,1)*p.strength,1.8+p.strength);
+      ctx.beginPath(); ctx.arc(px,py,12+18*clamp(t,0,1),0,Math.PI*2);
+      ctx.strokeStyle=`rgba(230,230,230,${clamp(fade,0,1)*.18*p.strength})`; ctx.stroke();
+    }
+
+    trails=trails.filter(t=>t.life>0.02);
+    for(const t of trails){
+      const [vx,vy]=VEC[t.dir];
+      ctx.strokeStyle=`rgba(${t.good?'160,160,160':'110,110,110'},${.09*t.life})`;
+      ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+vx*ring*1.45,cy+vy*ring*1.45); ctx.stroke();
+      t.life*=0.992;
+    }
+
+    if(motion){
+      const t=clamp((now-motion.start)/motion.duration,0,1);
+      const ease=1-Math.pow(1-t,3);
+      point.x=motion.from.x+(motion.to.x-motion.from.x)*ease;
+      point.y=motion.from.y+(motion.to.y-motion.from.y)*ease;
+      if(t>=1){ motion=null; setTimeout(()=>{point.x=cx;point.y=cy;},80); }
+    } else if(active && (!round || round.phase!=='launched')) {
+      point.x += (cx-point.x)*.18; point.y += (cy-point.y)*.18;
+    }
+
+    ctx.beginPath(); ctx.arc(point.x,point.y,4.5,0,Math.PI*2); ctx.fillStyle='#bdbdbd'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,2,0,Math.PI*2); ctx.fillStyle='#303030'; ctx.fill();
+
+    if(active) requestAnimationFrame(loop);
+  }
+  function loop(){ draw(); }
+})();
+</script>
+</body>
+</html>
