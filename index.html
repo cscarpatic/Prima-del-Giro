@@ -3,338 +3,544 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
-  <title>Prima del giro</title>
+  <meta name="theme-color" content="#050505" />
+  <title>Prima del Giro</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 100%; height: 100%;
-      background: #050505;
-      color: #aaa;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow: hidden;
-      touch-action: none;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    #start {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 24px; text-align: center; padding: 32px;
-      background: #050505; z-index: 10;
-    }
-    #start h1 {
-      font-weight: 300; font-size: 1.6rem; letter-spacing: 0.08em;
-      color: #ddd;
-    }
-    #start p {
-      font-size: 0.95rem; line-height: 1.5; max-width: 280px; color: #888;
-    }
-    #start button {
-      margin-top: 12px; padding: 14px 32px;
-      background: #111; border: 1px solid #333; color: #ccc;
-      font-size: 1rem; border-radius: 8px; cursor: pointer;
-    }
-    #start button:active { background: #1a1a1a; }
-    #game {
-      position: absolute; inset: 0;
-      display: none;
-    }
-    canvas {
-      width: 100%; height: 100%; display: block;
-    }
-    #hint {
-      position: absolute; bottom: 48px; left: 0; right: 0;
-      text-align: center; font-size: 0.8rem; color: #444;
-      pointer-events: none; opacity: 0; transition: opacity 0.6s;
-    }
-    #end {
-      position: absolute; inset: 0;
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-      background: #050505; z-index: 5; gap: 16px;
-    }
-    #end p { color: #666; font-size: 1rem; }
+    html, body { width: 100%; height: 100%; background: #050505; color: #b8b8b8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+    button { font: inherit; }
+    #start, #end, #permissionError { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; background: #050505; z-index: 20; }
+    #start { gap: 18px; }
+    #start h1 { font-weight: 300; font-size: 1.7rem; letter-spacing: .1em; color: #ececec; }
+    #start .tagline { max-width: 320px; color: #9a9a9a; line-height: 1.55; font-size: .98rem; }
+    #start .rules { max-width: 330px; color: #5f5f5f; line-height: 1.55; font-size: .78rem; }
+    .primary { margin-top: 8px; padding: 13px 30px; min-width: 180px; background: #111; border: 1px solid #393939; color: #ddd; border-radius: 999px; cursor: pointer; }
+    .primary:active { background: #181818; transform: scale(.99); }
+    #game { position: absolute; inset: 0; display: none; }
+    canvas { width: 100%; height: 100%; display: block; }
+    #hud { position: absolute; inset: 0; pointer-events: none; z-index: 5; font-variant-numeric: tabular-nums; }
+    #score { position: absolute; top: 24px; left: 24px; font-size: 1rem; letter-spacing: .08em; color: #888; }
+    #combo { position: absolute; top: 24px; right: 24px; font-size: .88rem; letter-spacing: .08em; color: #666; }
+    #feedback { position: absolute; left: 0; right: 0; bottom: 62px; text-align: center; font-size: .82rem; letter-spacing: .14em; color: #8e8e8e; opacity: 0; transition: opacity .18s ease, transform .18s ease; transform: translateY(4px); }
+    #feedback.show { opacity: 1; transform: translateY(0); }
+    #hint { position: absolute; left: 0; right: 0; bottom: 28px; text-align: center; font-size: .7rem; color: #404040; opacity: 1; transition: opacity .8s ease; }
+    #end { display: none; gap: 10px; }
+    #end .eyebrow { font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: #555; }
+    #finalScore { font-size: 3rem; font-weight: 200; color: #eee; letter-spacing: .04em; }
+    #finalMeta { color: #6d6d6d; font-size: .85rem; line-height: 1.5; }
+    #endMsg { color: #9a9a9a; font-size: .95rem; margin: 8px 0 4px; }
+    #permissionError { display: none; gap: 14px; }
+    #permissionError h2 { font-size: 1.15rem; font-weight: 400; color: #ddd; }
+    #permissionError p { max-width: 330px; line-height: 1.55; color: #777; font-size: .86rem; }
   </style>
 </head>
 <body>
   <div id="start">
-    <h1>Prima del giro</h1>
-    <p>Capovolgi il telefono un attimo prima che qualcosa cambi.<br>Ogni asse solo due volte.</p>
-    <button id="btnStart">Tocca per iniziare</button>
-    <p style="font-size:0.75rem;color:#555;margin-top:8px;">Richiede accesso al movimento del dispositivo</p>
+    <h1>PRIMA DEL GIRO</h1>
+    <p class="tagline">Non devi essere veloce.<br>Devi muoverti prima di sapere.</p>
+    <button class="primary" id="btnStart">Inizia</button>
+    <p class="rules">Ogni linea ha un gesto. Osserva il micro-segnale e anticipa lo scatto. Più parti presto, più punti fai. Ma alcuni segnali mentono.</p>
   </div>
 
   <div id="game">
     <canvas id="c"></canvas>
-    <div id="hint">Capovolgi prima del segnale</div>
+    <div id="hud">
+      <div id="score">000000</div>
+      <div id="combo">x1</div>
+      <div id="feedback"></div>
+      <div id="hint">verticale = avanti · orizzontale = lato · diagonale = torsione</div>
+    </div>
   </div>
 
   <div id="end">
-    <p id="endMsg">Non resta più nulla da tradurre.</p>
+    <div class="eyebrow">fine della traccia</div>
+    <div id="finalScore">0</div>
+    <div id="finalMeta"></div>
+    <p id="endMsg"></p>
+    <button class="primary" id="btnRestart">Riprova</button>
+  </div>
+
+  <div id="permissionError">
+    <h2>Serve il movimento del dispositivo</h2>
+    <p>Consenti l’accesso ai sensori del telefono. Su desktop puoi comunque provare con i tasti ↑, → e spazio.</p>
+    <button class="primary" id="btnFallback">Prova comunque</button>
   </div>
 
   <script>
-    // ========== CONFIG ==========
-    const FLIP_THRESHOLD = 145;       // gradi minimi di rotazione per contare un capovolgimento
-    const FLIP_WINDOW_MS = 900;       // tempo max in cui la rotazione deve completarsi
-    const PRE_SIGNAL_MIN = 1800;      // ms min tra un pre-segnale e il successivo
-    const PRE_SIGNAL_MAX = 3800;
-    const ANTICIPATION_MS = 480;      // finestra in cui il capovolgimento è valido (prima del cambiamento)
-    const MAX_MISSES = 5;
-
-    // ========== STATE ==========
-    const axes = {
-      vertical:   { lives: 2, name: "verticale",  angle: 0 },
-      horizontal: { lives: 2, name: "orizzontale", angle: 0 },
-      depth:      { lives: 2, name: "profondità", angle: 0 }
+    const AXES = {
+      vertical:   { label: "VERTICALE", angle: 90, key: "ArrowUp" },
+      horizontal: { label: "ORIZZONTALE", angle: 0, key: "ArrowRight" },
+      depth:      { label: "PROFONDITÀ", angle: 45, key: "Space" }
     };
-    let axisKeys = ["vertical", "horizontal", "depth"];
-    let consecutiveMisses = 0;
-    let gameActive = false;
-    let currentSignal = null;   // { axis, startTime, resolved }
-    let lastFlipTime = 0;
-    let orientationHistory = [];
-    let permissionGranted = false;
+    const AXIS_KEYS = Object.keys(AXES);
 
-    // ========== DOM ==========
+    const GESTURE_THRESHOLD = 24;
+    const GESTURE_COOLDOWN = 380;
+    const ROUND_GAP_MIN = 850;
+    const ROUND_GAP_MAX = 1800;
+    const CUE_DURATION_MIN = 65;
+    const CUE_DURATION_MAX = 120;
+    const LEAD_MIN = 380;
+    const LEAD_MAX = 820;
+    const BASE_FAKE_CHANCE = 0.12;
+    const MAX_FAKE_CHANCE = 0.42;
+    const MAX_MISSES = 3;
+
+    let gameActive = false;
+    let roundToken = 0;
+    let currentRound = null;
+    let score = 0;
+    let combo = 1;
+    let maxCombo = 1;
+    let streak = 0;
+    let bestLead = null;
+    let misses = 0;
+    let resolvedRounds = 0;
+    let falseBites = 0;
+    let permissionGranted = false;
+    let fallbackMode = false;
+
+    let orientation = { beta: 0, gamma: 0, alpha: 0, valid: false };
+    let gestureBase = null;
+    let lastGestureAt = 0;
+
+    let scars = [];
+    let flash = null;
+    let impact = null;
+    let feedbackTimer = null;
+
     const startEl = document.getElementById("start");
-    const gameEl  = document.getElementById("game");
-    const endEl   = document.getElementById("end");
-    const endMsg  = document.getElementById("endMsg");
-    const hintEl  = document.getElementById("hint");
-    const canvas  = document.getElementById("c");
-    const ctx     = canvas.getContext("2d");
-    let W, H;
+    const gameEl = document.getElementById("game");
+    const endEl = document.getElementById("end");
+    const permissionErrorEl = document.getElementById("permissionError");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const feedbackEl = document.getElementById("feedback");
+    const hintEl = document.getElementById("hint");
+    const finalScoreEl = document.getElementById("finalScore");
+    const finalMetaEl = document.getElementById("finalMeta");
+    const endMsgEl = document.getElementById("endMsg");
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    let dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    let W = 0, H = 0;
 
     function resize() {
-      W = canvas.width  = window.innerWidth * devicePixelRatio;
-      H = canvas.height = window.innerHeight * devicePixelRatio;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
+      dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    window.addEventListener("resize", () => { resize(); });
+    window.addEventListener("resize", resize);
     resize();
 
-    // ========== PERMISSION & START ==========
-    document.getElementById("btnStart").addEventListener("click", async () => {
-      if (typeof DeviceOrientationEvent !== "undefined" &&
-          typeof DeviceOrientationEvent.requestPermission === "function") {
+    let audioCtx = null;
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function tone(freq, duration = 0.035, gainValue = 0.025) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      gain.gain.value = gainValue;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(gainValue, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    function haptic(pattern) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    async function requestMotionPermission() {
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
         try {
           const state = await DeviceOrientationEvent.requestPermission();
-          permissionGranted = (state === "granted");
-        } catch (e) {
-          permissionGranted = false;
+          return state === "granted";
+        } catch (_) {
+          return false;
         }
-      } else {
-        // Desktop o Android senza requestPermission
-        permissionGranted = true;
       }
+      return typeof DeviceOrientationEvent !== "undefined";
+    }
+
+    document.getElementById("btnStart").addEventListener("click", async () => {
+      ensureAudio();
+      permissionGranted = await requestMotionPermission();
+      const likelyDesktop = !("ontouchstart" in window) && navigator.maxTouchPoints === 0;
+      if (!permissionGranted && !likelyDesktop) {
+        startEl.style.display = "none";
+        permissionErrorEl.style.display = "flex";
+        return;
+      }
+      fallbackMode = !permissionGranted;
+      beginGame();
+    });
+
+    document.getElementById("btnFallback").addEventListener("click", () => {
+      ensureAudio();
+      fallbackMode = true;
+      permissionErrorEl.style.display = "none";
+      beginGame();
+    });
+
+    document.getElementById("btnRestart").addEventListener("click", () => {
+      ensureAudio();
+      endEl.style.display = "none";
+      beginGame();
+    });
+
+    function beginGame() {
+      roundToken++;
+      gameActive = true;
+      currentRound = null;
+      score = 0;
+      combo = 1;
+      maxCombo = 1;
+      streak = 0;
+      bestLead = null;
+      misses = 0;
+      resolvedRounds = 0;
+      falseBites = 0;
+      scars = [];
+      flash = null;
+      impact = null;
+      gestureBase = orientation.valid ? { ...orientation } : null;
+      lastGestureAt = 0;
 
       startEl.style.display = "none";
+      permissionErrorEl.style.display = "none";
+      endEl.style.display = "none";
       gameEl.style.display = "block";
-      gameActive = true;
-      hintEl.style.opacity = "1";
-      setTimeout(() => hintEl.style.opacity = "0", 3500);
-      scheduleNextSignal();
-      requestAnimationFrame(loop);
-    });
+      updateHUD();
 
-    // ========== ORIENTATION ==========
-    let lastBeta = null, lastGamma = null, lastAlpha = null;
-    let flipAccum = { beta: 0, gamma: 0, alpha: 0, start: 0 };
+      hintEl.style.opacity = "1";
+      setTimeout(() => { if (gameActive) hintEl.style.opacity = ".25"; }, 4500);
+      showFeedback("OSSERVA", 850);
+      scheduleRound(1100);
+      requestAnimationFrame(loop);
+    }
+
+    function circularDelta(a, b) {
+      let d = a - b;
+      while (d > 180) d -= 360;
+      while (d < -180) d += 360;
+      return d;
+    }
 
     window.addEventListener("deviceorientation", (e) => {
-      if (!gameActive) return;
-      const beta  = e.beta  ?? 0;   // -180 a 180  (front-back)
-      const gamma = e.gamma ?? 0;   // -90 a 90    (left-right)
-      const alpha = e.alpha ?? 0;   // 0 a 360     (compass)
+      if (e.beta == null || e.gamma == null || e.alpha == null) return;
+      orientation = { beta: e.beta, gamma: e.gamma, alpha: e.alpha, valid: true };
+      if (!gameActive || fallbackMode) return;
+      if (!gestureBase) {
+        gestureBase = { ...orientation };
+        return;
+      }
 
       const now = performance.now();
+      if (now - lastGestureAt < GESTURE_COOLDOWN) return;
 
-      if (lastBeta !== null) {
-        let dBeta  = Math.abs(beta  - lastBeta);
-        let dGamma = Math.abs(gamma - lastGamma);
-        let dAlpha = Math.abs(alpha - lastAlpha);
-        // gestisci wrap-around
-        if (dBeta  > 180) dBeta  = 360 - dBeta;
-        if (dAlpha > 180) dAlpha = 360 - dAlpha;
+      const dBeta = orientation.beta - gestureBase.beta;
+      const dGamma = orientation.gamma - gestureBase.gamma;
+      const dAlpha = circularDelta(orientation.alpha, gestureBase.alpha);
+      const values = { vertical: Math.abs(dBeta), horizontal: Math.abs(dGamma), depth: Math.abs(dAlpha) };
+      const winner = AXIS_KEYS.reduce((best, k) => values[k] > values[best] ? k : best, AXIS_KEYS[0]);
 
-        // accumula se il movimento è continuo
-        if (now - flipAccum.start > FLIP_WINDOW_MS) {
-          flipAccum = { beta: 0, gamma: 0, alpha: 0, start: now };
-        }
-        flipAccum.beta  += dBeta;
-        flipAccum.gamma += dGamma;
-        flipAccum.alpha += dAlpha;
-
-        const total = Math.max(flipAccum.beta, flipAccum.gamma, flipAccum.alpha);
-        if (total >= FLIP_THRESHOLD && now - lastFlipTime > 700) {
-          lastFlipTime = now;
-          flipAccum = { beta: 0, gamma: 0, alpha: 0, start: now };
-          onFlip();
-        }
+      if (values[winner] >= GESTURE_THRESHOLD) {
+        lastGestureAt = now;
+        gestureBase = { ...orientation };
+        handleGesture(winner, now);
+      } else if (Math.max(...Object.values(values)) < 8) {
+        gestureBase.beta = gestureBase.beta * 0.92 + orientation.beta * 0.08;
+        gestureBase.gamma = gestureBase.gamma * 0.92 + orientation.gamma * 0.08;
+        gestureBase.alpha = gestureBase.alpha * 0.92 + orientation.alpha * 0.08;
       }
-      lastBeta = beta; lastGamma = gamma; lastAlpha = alpha;
     });
 
-    // Fallback desktop / test: tap o space = flip
-    canvas.addEventListener("pointerdown", () => { if (gameActive) onFlip(); });
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space" && gameActive) { e.preventDefault(); onFlip(); }
+      if (!gameActive) return;
+      let axis = null;
+      if (e.code === "ArrowUp") axis = "vertical";
+      if (e.code === "ArrowRight") axis = "horizontal";
+      if (e.code === "Space") axis = "depth";
+      if (!axis) return;
+      e.preventDefault();
+      handleGesture(axis, performance.now());
     });
 
-    // ========== GAME LOGIC ==========
-    function onFlip() {
-      if (!currentSignal || currentSignal.resolved) return;
+    canvas.addEventListener("pointerdown", (e) => {
+      if (!gameActive || !fallbackMode) return;
+      const x = e.clientX / Math.max(1, W);
+      const axis = x < .33 ? "vertical" : x > .66 ? "horizontal" : "depth";
+      handleGesture(axis, performance.now());
+    });
 
-      const now = performance.now();
-      const elapsed = now - currentSignal.startTime;
-
-      // Deve essere DENTRO la finestra di anticipo (prima del cambiamento)
-      if (elapsed < ANTICIPATION_MS) {
-        // Successo
-        currentSignal.resolved = true;
-        const ax = axes[currentSignal.axis];
-        if (ax.lives > 0) {
-          ax.lives--;
-          ax.angle += (Math.random() > 0.5 ? 18 : -18); // piccola rotazione visiva permanente
-          // haptic se disponibile
-          if (navigator.vibrate) navigator.vibrate(30);
-        }
-        consecutiveMisses = 0;
-        // controlla se tutti gli assi sono esauriti
-        if (axisKeys.every(k => axes[k].lives <= 0)) {
-          endGame("Non resta più nulla da tradurre.");
-          return;
-        }
-        // prossimo segnale dopo un breve respiro
-        setTimeout(scheduleNextSignal, 900 + Math.random() * 600);
-      } else {
-        // Troppo tardi → miss
-        registerMiss();
-      }
+    function difficulty() {
+      return Math.min(1, resolvedRounds / 26);
     }
 
-    function registerMiss() {
-      if (!currentSignal || currentSignal.resolved) return;
-      currentSignal.resolved = true;
-      consecutiveMisses++;
-      if (consecutiveMisses >= MAX_MISSES) {
-        endGame("I segnali non arrivano più in tempo.");
-        return;
-      }
-      setTimeout(scheduleNextSignal, 700 + Math.random() * 500);
+    function fakeChance() {
+      const d = difficulty();
+      return Math.min(MAX_FAKE_CHANCE, BASE_FAKE_CHANCE + d * 0.26 + Math.max(0, streak - 8) * 0.006);
     }
 
-    function scheduleNextSignal() {
+    function scheduleRound(forcedDelay = null) {
       if (!gameActive) return;
-      // scegli un asse ancora vivo
-      const alive = axisKeys.filter(k => axes[k].lives > 0);
-      if (alive.length === 0) {
-        endGame("Non resta più nulla da tradurre.");
-        return;
-      }
-      const axis = alive[Math.floor(Math.random() * alive.length)];
-      const delay = PRE_SIGNAL_MIN + Math.random() * (PRE_SIGNAL_MAX - PRE_SIGNAL_MIN);
-
+      const token = roundToken;
+      const d = difficulty();
+      const delay = forcedDelay ?? ((ROUND_GAP_MIN + Math.random() * (ROUND_GAP_MAX - ROUND_GAP_MIN)) * (1 - d * 0.34));
       setTimeout(() => {
-        if (!gameActive) return;
-        currentSignal = {
-          axis,
-          startTime: performance.now(),
-          resolved: false
-        };
-        // dopo la finestra di anticipo, se non risolto → miss automatico
-        setTimeout(() => {
-          if (currentSignal && !currentSignal.resolved) {
-            registerMiss();
-          }
-        }, ANTICIPATION_MS + 80);
+        if (!gameActive || token !== roundToken) return;
+        startRound();
       }, delay);
     }
 
-    function endGame(msg) {
-      gameActive = false;
-      endMsg.textContent = msg;
-      endEl.style.display = "flex";
+    function startRound() {
+      if (!gameActive) return;
+      const axis = AXIS_KEYS[Math.floor(Math.random() * AXIS_KEYS.length)];
+      const isFake = Math.random() < fakeChance();
+      const cueDuration = CUE_DURATION_MIN + Math.random() * (CUE_DURATION_MAX - CUE_DURATION_MIN);
+      const d = difficulty();
+      const maxLead = LEAD_MAX - d * 170;
+      const minLead = LEAD_MIN - d * 70;
+      const lead = minLead + Math.random() * Math.max(80, maxLead - minLead);
+      const now = performance.now();
+
+      currentRound = { axis, isFake, cueAt: now, cueEndAt: now + cueDuration, eventAt: isFake ? null : now + cueDuration + lead, resolved: false };
+      flash = { axis, until: now + cueDuration, strength: isFake ? .62 : 1 };
+      tone(isFake ? 470 : 520, .022, .015);
+
+      if (isFake) {
+        setTimeout(() => {
+          if (!gameActive || !currentRound || currentRound.resolved || !currentRound.isFake) return;
+          currentRound.resolved = true;
+          currentRound = null;
+          resolvedRounds++;
+          showFeedback("NON ERA NULLA", 420);
+          scheduleRound();
+        }, cueDuration + lead + 220);
+      } else {
+        const roundRef = currentRound;
+        setTimeout(() => {
+          if (!gameActive || currentRound !== roundRef || roundRef.resolved) return;
+          triggerEvent(roundRef);
+        }, cueDuration + lead);
+      }
     }
 
-    // ========== RENDER ==========
-    function loop() {
-      if (!gameActive && endEl.style.display !== "flex") return;
-      draw();
+    function handleGesture(axis, at) {
+      if (!gameActive) return;
+
+      if (!currentRound || currentRound.resolved) {
+        punishFalse(axis, "TROPPO PRESTO");
+        return;
+      }
+
+      if (currentRound.isFake) {
+        currentRound.resolved = true;
+        falseBites++;
+        punishFalse(axis, "FALSO SEGNALE");
+        currentRound = null;
+        scheduleRound(720);
+        return;
+      }
+
+      if (axis !== currentRound.axis) {
+        currentRound.resolved = true;
+        punishFalse(axis, "ASSE SBAGLIATO");
+        currentRound = null;
+        scheduleRound(760);
+        return;
+      }
+
+      const lead = currentRound.eventAt - at;
+      if (lead <= 0) {
+        currentRound.resolved = true;
+        registerMiss("TARDI");
+        currentRound = null;
+        scheduleRound(720);
+        return;
+      }
+
+      currentRound.resolved = true;
+      const timingFactor = Math.max(0, Math.min(1, lead / 760));
+      const base = Math.round(120 + timingFactor * 480);
+      const gain = Math.round(base * combo);
+      score += gain;
+      streak++;
+      resolvedRounds++;
+      combo = 1 + Math.min(9, Math.floor(streak / 3));
+      maxCombo = Math.max(maxCombo, combo);
+      bestLead = bestLead == null ? lead : Math.max(bestLead, lead);
+
+      addScar(currentRound.axis, lead);
+      impact = { axis: currentRound.axis, at: performance.now(), good: true };
+      tone(680 + Math.min(420, combo * 32), .045, .026);
+      haptic(22);
+
+      const grade = lead > 560 ? "PRESO PRIMA" : lead > 340 ? "PULITO" : "AL LIMITE";
+      showFeedback(`${grade} · ${Math.round(lead)} ms · +${gain}`, 620);
+      currentRound = null;
+      updateHUD();
+      scheduleRound(620);
+    }
+
+    function triggerEvent(round) {
+      impact = { axis: round.axis, at: performance.now(), good: false };
+      tone(155, .09, .035);
+      haptic([45, 35, 45]);
+      round.resolved = true;
+      currentRound = null;
+      registerMiss("HAI ASPETTATO LO SCATTO");
+      scheduleRound(760);
+    }
+
+    function punishFalse(axis, reason) {
+      impact = { axis, at: performance.now(), good: false };
+      tone(190, .065, .03);
+      haptic(55);
+      streak = 0;
+      combo = 1;
+      score = Math.max(0, score - 90);
+      misses++;
+      showFeedback(reason, 650);
+      updateHUD();
+      if (misses >= MAX_MISSES) endGame("Ti sei fidato del momento sbagliato.");
+    }
+
+    function registerMiss(reason) {
+      streak = 0;
+      combo = 1;
+      misses++;
+      showFeedback(reason, 700);
+      updateHUD();
+      if (misses >= MAX_MISSES) endGame("Hai aspettato di sapere.");
+    }
+
+    function addScar(axis, lead) {
+      const max = 28;
+      scars.push({ axis, offset: (Math.random() - .5) * 24, rotation: (Math.random() - .5) * .22, alpha: .06 + Math.min(.14, lead / 6000) });
+      if (scars.length > max) scars.shift();
+    }
+
+    function endGame(message) {
+      if (!gameActive) return;
+      gameActive = false;
+      roundToken++;
+      currentRound = null;
+      gameEl.style.display = "none";
+      endEl.style.display = "flex";
+      finalScoreEl.textContent = score.toLocaleString("it-IT");
+      const leadText = bestLead == null ? "—" : `${Math.round(bestLead)} ms`;
+      finalMetaEl.innerHTML = `combo migliore: x${maxCombo}<br>` + `anticipo migliore: ${leadText} · falsi abboccati: ${falseBites}`;
+      endMsgEl.textContent = message;
+    }
+
+    function updateHUD() {
+      scoreEl.textContent = String(score).padStart(6, "0");
+      comboEl.textContent = `x${combo}`;
+    }
+
+    function showFeedback(text, duration = 520) {
+      feedbackEl.textContent = text;
+      feedbackEl.classList.add("show");
+      clearTimeout(feedbackTimer);
+      feedbackTimer = setTimeout(() => feedbackEl.classList.remove("show"), duration);
+    }
+
+    function loop(ts) {
+      if (!gameActive) return;
+      draw(ts || performance.now());
       requestAnimationFrame(loop);
     }
 
-    function draw() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      ctx.clearRect(0, 0, w, h);
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2;
+      const cy = H / 2;
+      const len = Math.min(W, H) * 0.31;
 
-      const cx = w / 2;
-      const cy = h / 2;
-      const len = Math.min(w, h) * 0.32;
-
-      // pre-signal visual (tremore)
-      let tremble = 0;
-      if (currentSignal && !currentSignal.resolved) {
-        const t = (performance.now() - currentSignal.startTime) / ANTICIPATION_MS;
-        tremble = Math.sin(performance.now() * 0.04) * (3 + t * 5);
+      for (const s of scars) {
+        drawAxis(s.axis, cx + s.offset, cy - s.offset * .35, len * .96, { alpha: s.alpha, width: 1, rotation: s.rotation, glow: 0 });
       }
 
-      // VERTICALE (alto-basso)
-      if (axes.vertical.lives > 0) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate((axes.vertical.angle + (currentSignal?.axis === "vertical" ? tremble : 0)) * Math.PI / 180);
-        ctx.beginPath();
-        ctx.moveTo(0, -len);
-        ctx.lineTo(0,  len);
-        ctx.strokeStyle = currentSignal?.axis === "vertical" && !currentSignal.resolved
-          ? `rgba(220,220,220,${0.55 + 0.35 * Math.sin(performance.now()*0.03)})`
-          : `rgba(160,160,160,${0.25 + axes.vertical.lives * 0.2})`;
-        ctx.lineWidth = axes.vertical.lives === 2 ? 2.2 : 1.4;
-        ctx.stroke();
-        ctx.restore();
+      for (const axis of AXIS_KEYS) {
+        let alpha = .28;
+        let width = 1.35;
+        let rotation = 0;
+        let glow = 0;
+
+        if (flash && flash.axis === axis && now < flash.until) {
+          const p = Math.max(0, Math.min(1, (flash.until - now) / 120));
+          alpha = .55 + .34 * flash.strength * p;
+          width = 1.7;
+          rotation = Math.sin(now * .19) * .018 * flash.strength;
+          glow = 6 * flash.strength;
+        }
+
+        if (impact && impact.axis === axis) {
+          const age = now - impact.at;
+          if (age < 260) {
+            const q = 1 - age / 260;
+            rotation += (impact.good ? .05 : .18) * Math.sin(age * .055) * q;
+            alpha = Math.max(alpha, impact.good ? .62 : .82);
+            width = impact.good ? 1.8 : 2.2;
+          } else {
+            impact = null;
+          }
+        }
+
+        drawAxis(axis, cx, cy, len, { alpha, width, rotation, glow });
       }
 
-      // ORIZZONTALE (sinistra-destra)
-      if (axes.horizontal.lives > 0) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate((axes.horizontal.angle + (currentSignal?.axis === "horizontal" ? tremble : 0)) * Math.PI / 180);
-        ctx.beginPath();
-        ctx.moveTo(-len, 0);
-        ctx.lineTo( len, 0);
-        ctx.strokeStyle = currentSignal?.axis === "horizontal" && !currentSignal.resolved
-          ? `rgba(220,220,220,${0.55 + 0.35 * Math.sin(performance.now()*0.03)})`
-          : `rgba(160,160,160,${0.25 + axes.horizontal.lives * 0.2})`;
-        ctx.lineWidth = axes.horizontal.lives === 2 ? 2.2 : 1.4;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // PROFONDITÀ (simulata con diagonale)
-      if (axes.depth.lives > 0) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate((45 + axes.depth.angle + (currentSignal?.axis === "depth" ? tremble : 0)) * Math.PI / 180);
-        ctx.beginPath();
-        ctx.moveTo(-len * 0.85, 0);
-        ctx.lineTo( len * 0.85, 0);
-        ctx.strokeStyle = currentSignal?.axis === "depth" && !currentSignal.resolved
-          ? `rgba(220,220,220,${0.55 + 0.35 * Math.sin(performance.now()*0.03)})`
-          : `rgba(160,160,160,${0.25 + axes.depth.lives * 0.2})`;
-        ctx.lineWidth = axes.depth.lives === 2 ? 2.2 : 1.4;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // piccolo indicatore centrale
       ctx.beginPath();
-      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#333";
+      ctx.arc(cx, cy, 2.25, 0, Math.PI * 2);
+      ctx.fillStyle = "#3b3b3b";
       ctx.fill();
+
+      const pulse = .025 + .015 * Math.sin(now * .0018);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 12 + 2 * Math.sin(now * .0014), 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(170,170,170,${pulse})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function drawAxis(axis, cx, cy, len, opts) {
+      const baseAngle = AXES[axis].angle * Math.PI / 180;
+      const angle = baseAngle + (opts.rotation || 0);
+      const half = axis === "depth" ? len * .84 : len;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      if (opts.glow) {
+        ctx.shadowBlur = opts.glow;
+        ctx.shadowColor = "rgba(230,230,230,.35)";
+      }
+      ctx.beginPath();
+      ctx.moveTo(-half, 0);
+      ctx.lineTo(half, 0);
+      ctx.strokeStyle = `rgba(190,190,190,${opts.alpha})`;
+      ctx.lineWidth = opts.width;
+      ctx.stroke();
+      ctx.restore();
     }
   </script>
 </body>
